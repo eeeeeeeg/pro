@@ -79,6 +79,9 @@ export default class KLineChartPro implements ChartPro {
 
   private _chartApi: Nullable<ChartPro> = null
 
+  resize (): void {
+    this._chartApi!.resize()
+  }
 
   setTheme (theme: string): void {
     this._container?.setAttribute('data-theme', theme)

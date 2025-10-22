@@ -59,6 +59,7 @@ export interface ChartProOptions {
 }
 
 export interface ChartPro {
+  resize(): void
   setTheme(theme: string): void
   getTheme(): string
   setStyles(styles: DeepPartial<Styles>): void

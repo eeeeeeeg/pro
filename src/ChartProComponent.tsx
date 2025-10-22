@@ -120,6 +120,7 @@ const ChartProComponent: Component<ChartProComponentProps> = props => {
   })
 
   props.ref({
+    resize: () => { widget?.resize() },
     setTheme,
     getTheme: () => theme(),
     setStyles,
