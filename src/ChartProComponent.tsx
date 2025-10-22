@@ -73,6 +73,24 @@ const ChartProComponent: Component<ChartProComponentProps> = props => {
 
   let loading = false
 
+  let watermarkDom: HTMLDivElement | undefined
+  let watermarkValue: Nullable<string | Node> = props.watermark
+
+  const updateWatermark = (watermark: Nullable<string | Node>) => {
+    watermarkValue = watermark
+    if (!watermarkDom) {
+      return
+    }
+    watermarkDom.innerHTML = ''
+    if (typeof watermark === 'string') {
+      const str = watermark.replace(/(^\s*)|(\s*$)/g, '')
+      watermarkDom.innerHTML = str
+      watermarkValue = str
+    } else if (watermark instanceof Node) {
+      watermarkDom.appendChild(watermark)
+    }
+  }
+
   const [theme, setTheme] = createSignal(props.theme)
   const [styles, setStyles] = createSignal(props.styles)
   const [locale, setLocale] = createSignal(props.locale)
@@ -113,7 +131,9 @@ const ChartProComponent: Component<ChartProComponentProps> = props => {
     setSymbol,
     getSymbol: () => symbol(),
     setPeriod,
-    getPeriod: () => period()
+    getPeriod: () => period(),
+    setWatermark: watermark => { updateWatermark(watermark) },
+    getWatermark: () => watermarkValue
   })
 
   const documentResize = () => {
@@ -214,15 +234,10 @@ const ChartProComponent: Component<ChartProComponentProps> = props => {
     if (widget) {
       const watermarkContainer = widget.getDom('candle_pane', DomPosition.Main)
       if (watermarkContainer) {
-        let watermark = document.createElement('div')
-        watermark.className = 'klinecharts-pro-watermark'
-        if (utils.isString(props.watermark)) {
-          const str = (props.watermark as string).replace(/(^\s*)|(\s*$)/g, '')
-          watermark.innerHTML = str
-        } else {
-          watermark.appendChild(props.watermark as Node)
-        }
-        watermarkContainer.appendChild(watermark)
+        watermarkDom = document.createElement('div')
+        watermarkDom.className = 'klinecharts-pro-watermark'
+        updateWatermark(watermarkValue)
+        watermarkContainer.appendChild(watermarkDom)
       }
 
       const priceUnitContainer = widget.getDom('candle_pane', DomPosition.YAxis)
