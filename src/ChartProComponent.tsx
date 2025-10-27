@@ -33,8 +33,9 @@ import { translateTimezone } from './widget/timezone-modal/data'
 
 import { SymbolInfo, Period, ChartProOptions, ChartPro } from './types'
 
-export interface ChartProComponentProps extends Required<Omit<ChartProOptions, 'container'>> {
+export interface ChartProComponentProps extends Required<Omit<ChartProOptions, 'container' | 'periodBarTools'>> {
   ref: (chart: ChartPro) => void
+  periodBarTools?: ChartProOptions['periodBarTools']
 }
 
 interface PrevSymbolPeriod {
@@ -549,6 +550,7 @@ const ChartProComponent: Component<ChartProComponentProps> = props => {
         spread={drawingBarVisible()}
         period={period()}
         periods={props.periods}
+        extraTools={props.periodBarTools}
         onMenuClick={async () => {
           try {
             await startTransition(() => setDrawingBarVisible(!drawingBarVisible()))

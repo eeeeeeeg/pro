@@ -33,6 +33,18 @@ export interface Period {
   text: string
 }
 
+export interface PeriodBarToolState {
+  svg: string | Node
+  name: string
+}
+
+export interface PeriodBarTool {
+  svg: string | Node
+  name: string
+  active: PeriodBarToolState
+  onClick: (isActive: boolean) => void
+}
+
 export type DatafeedSubscribeCallback = (data: KLineData) => void
 
 export interface Datafeed {
@@ -55,6 +67,7 @@ export interface ChartProOptions {
   timezone?: string
   mainIndicators?: string[]
   subIndicators?: string[]
+  periodBarTools?: PeriodBarTool[]
   datafeed: Datafeed
 }
 
