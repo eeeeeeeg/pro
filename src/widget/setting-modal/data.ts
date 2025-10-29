@@ -13,21 +13,26 @@
  */
 
 import i18n from '../../i18n'
+import { Period } from '../../types'
 
-export function getOptions (locale: string) {
+export function getOptions (locale: string, period: Period) {
+  const baseCandleOptions = [
+    { key: 'candle_solid', text: i18n('candle_solid', locale) },
+    { key: 'candle_stroke', text: i18n('candle_stroke', locale) },
+    { key: 'candle_up_stroke', text: i18n('candle_up_stroke', locale) },
+    { key: 'candle_down_stroke', text: i18n('candle_down_stroke', locale) },
+    { key: 'ohlc', text: i18n('ohlc', locale) }
+  ]
+  const candleTypeDataSource =
+    period.text === '分时' || period.timespan === 'time'
+      ? [{ key: 'area', text: i18n('area', locale) }]
+      : [...baseCandleOptions]
   return [
     {
       key: 'candle.type',
       text: i18n('candle_type', locale),
       component: 'select',
-      dataSource: [
-        { key: 'candle_solid', text: i18n('candle_solid', locale) },
-        { key: 'candle_stroke', text: i18n('candle_stroke', locale) },
-        { key: 'candle_up_stroke', text: i18n('candle_up_stroke', locale) },
-        { key: 'candle_down_stroke', text: i18n('candle_down_stroke', locale) },
-        { key: 'ohlc', text: i18n('ohlc', locale) },
-        { key: 'area', text: i18n('area', locale) }
-      ]
+      dataSource: candleTypeDataSource
     },
     {
       key: 'candle.priceMark.last.show',
@@ -57,17 +62,17 @@ export function getOptions (locale: string) {
         { key: 'normal', text: i18n('normal', locale) },
         { key: 'percentage', text: i18n('percentage', locale) },
         { key: 'log', text: i18n('log', locale) }
-      ],
+      ]
     },
     {
       key: 'yAxis.reverse',
       text: i18n('reverse_coordinate', locale),
-      component: 'switch',
+      component: 'switch'
     },
     {
       key: 'grid.show',
       text: i18n('grid_show', locale),
-      component: 'switch',
+      component: 'switch'
     }
   ]
 }

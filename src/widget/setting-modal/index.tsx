@@ -22,10 +22,12 @@ import type { SelectDataSourceItem } from '../../component'
 
 import i18n from '../../i18n'
 import { getOptions } from './data'
+import { Period } from '../../types'
 
 export interface SettingModalProps {
   locale: string
   currentStyles: Styles
+  currentPeriod: Period
   onClose: () => void
   onChange: (style: DeepPartial<Styles>) => void
   onRestoreDefault: (options: SelectDataSourceItem[]) => void
@@ -33,10 +35,10 @@ export interface SettingModalProps {
 
 const SettingModal: Component<SettingModalProps> = props => {
   const [styles, setStyles] = createSignal(props.currentStyles)
-  const [options, setOptions] = createSignal(getOptions(props.locale))
+  const [options, setOptions] = createSignal(getOptions(props.locale, props.currentPeriod))
 
   createEffect(() => {
-    setOptions(getOptions(props.locale))
+    setOptions(getOptions(props.locale, props.currentPeriod))
   })
 
   const update = (option: SelectDataSourceItem, newValue: any) => {
