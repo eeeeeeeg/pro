@@ -87,4 +87,6 @@ export interface ChartPro {
   getPeriod(): Period
   setWatermark(watermark: Nullable<string | Node>): void
   getWatermark(): Nullable<string | Node>
+  setTradingDaySeparatorVisible(enabled: boolean): void
+  getTradingDaySeparatorVisible(): boolean
 }

@@ -140,4 +140,12 @@ export default class KLineChartPro implements ChartPro {
   getWatermark (): Nullable<string | Node> {
     return this._chartApi!.getWatermark()
   }
+
+  setTradingDaySeparatorVisible (enabled: boolean): void {
+    this._chartApi!.setTradingDaySeparatorVisible(enabled)
+  }
+
+  getTradingDaySeparatorVisible (): boolean {
+    return this._chartApi!.getTradingDaySeparatorVisible()
+  }
 }

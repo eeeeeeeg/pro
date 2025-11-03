@@ -29,6 +29,8 @@ import {
   Nullable,
   Chart,
   OverlayMode,
+  KLineData,
+  LineType,
   Styles,
   CandleType,
   TooltipIconPosition,
@@ -70,6 +72,66 @@ interface PrevSymbolPeriod {
   period: Period;
 }
 
+const TRADING_DAY_SEPARATOR_GROUP_ID =
+  "__klinecharts_pro_trading_day_separator__";
+const INTRADAY_TIMESPANS = new Set(["time", "second", "minute", "hour"]);
+
+let tradingDayFormatter: Intl.DateTimeFormat | undefined;
+let tradingDayFormatterTimezone: string | undefined;
+
+const getTradingDayFormatter = (timezoneKey: string) => {
+  if (tradingDayFormatter && tradingDayFormatterTimezone === timezoneKey) {
+    return tradingDayFormatter;
+  }
+  try {
+    tradingDayFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezoneKey,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    tradingDayFormatterTimezone = timezoneKey;
+    return tradingDayFormatter;
+  } catch {
+    tradingDayFormatter = undefined;
+    tradingDayFormatterTimezone = undefined;
+    return undefined;
+  }
+};
+
+const formatTradingDayKey = (
+  timestamp: number,
+  formatter?: Intl.DateTimeFormat
+) => {
+  if (formatter) {
+    try {
+      const parts = formatter.formatToParts(new Date(timestamp));
+      const year = parts.find((part) => part.type === "year")?.value;
+      const month = parts.find((part) => part.type === "month")?.value;
+      const day = parts.find((part) => part.type === "day")?.value;
+      if (year && month && day) {
+        return `${year}-${month}-${day}`;
+      }
+    } catch {}
+  }
+  const date = new Date(timestamp);
+  const year = date.getUTCFullYear().toString().padStart(4, "0");
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+  const day = date.getUTCDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const resolveSeparatorPointValue = (data?: KLineData): number =>
+  Number(data?.close ?? data?.open ?? data?.high ?? data?.low ?? 0);
+
+const resolveSeparatorLineStyle = (theme: () => string) => {
+  const isDark = theme() === "dark";
+  return {
+    color: isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+    size: 1,
+    dashedValue: [4, 4],
+  };
+};
 function createIndicator(
   widget: Nullable<Chart>,
   indicatorName: string,
@@ -170,6 +232,64 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
       paneId: "",
       calcParams: [] as Array<any>,
     });
+  const [tradingDaySeparatorVisible, setTradingDaySeparatorVisible] =
+    createSignal(true);
+
+  const updateTradingDaySeparators = () => {
+    const chart = widget;
+    if (!chart) {
+      return;
+    }
+    chart.removeOverlay({ groupId: TRADING_DAY_SEPARATOR_GROUP_ID });
+    const currentPeriod = period();
+    if (
+      !tradingDaySeparatorVisible() ||
+      !INTRADAY_TIMESPANS.has(currentPeriod.timespan)
+    ) {
+      return;
+    }
+    const dataList = chart.getDataList();
+    if (!dataList || dataList.length < 2) {
+      return;
+    }
+    const timezoneKey = timezone()?.key ?? "UTC";
+    const formatter = getTradingDayFormatter(timezoneKey);
+    const lineStyle = resolveSeparatorLineStyle(theme);
+    let previousKey = formatTradingDayKey(dataList[0].timestamp, formatter);
+    for (let i = 1; i < dataList.length; i += 1) {
+      const currentData = dataList[i];
+      const currentKey = formatTradingDayKey(currentData.timestamp, formatter);
+      if (currentKey === previousKey) {
+        continue;
+      }
+      const boundaryIndex = i - 1;
+      const boundaryData = dataList[boundaryIndex];
+      chart.createOverlay(
+        {
+          name: "verticalStraightLine",
+          groupId: TRADING_DAY_SEPARATOR_GROUP_ID,
+          lock: true,
+          points: [
+            {
+              dataIndex: boundaryIndex,
+              timestamp: boundaryData.timestamp,
+              value: resolveSeparatorPointValue(boundaryData),
+            },
+          ],
+          styles: {
+            line: {
+              color: lineStyle.color,
+              size: lineStyle.size,
+              style: LineType.Dashed,
+              dashedValue: lineStyle.dashedValue,
+            },
+          },
+        },
+        "candle_pane"
+      );
+      previousKey = currentKey;
+    }
+  };
 
   const setCandleType = (type: CandleType) => {
     if (!widget) {
@@ -181,7 +301,7 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
     if (currType !== type) {
       setTimeout(() => {
         widget?.setStyles({ candle: { type } });
-      }, 100);
+      }, 300);
     }
     pendingCandleType = undefined;
   };
@@ -246,6 +366,11 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
       updateWatermark(watermark);
     },
     getWatermark: () => watermarkValue,
+    setTradingDaySeparatorVisible: (enabled) => {
+      setTradingDaySeparatorVisible(enabled);
+      updateTradingDaySeparators();
+    },
+    getTradingDaySeparatorVisible: () => tradingDaySeparatorVisible(),
   });
 
   const documentResize = () => {
@@ -414,6 +539,7 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
           to
         );
         widget?.applyMoreData(kLineDataList, kLineDataList.length > 0);
+        updateTradingDaySeparators();
         loading = false;
       };
       get();
@@ -508,8 +634,10 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
           to
         );
         widget?.applyNewData(kLineDataList, kLineDataList.length > 0);
+        updateTradingDaySeparators();
         props.datafeed.subscribe(s, p, (data) => {
           widget?.updateData(data);
+          updateTradingDaySeparators();
         });
         loading = false;
         setLoadingVisible(false);
@@ -608,6 +736,7 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
         },
       },
     });
+    updateTradingDaySeparators();
   });
 
   createEffect(() => {
@@ -616,12 +745,14 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
 
   createEffect(() => {
     widget?.setTimezone(timezone().key);
+    updateTradingDaySeparators();
   });
 
   createEffect(() => {
     if (styles()) {
       widget?.setStyles(styles());
       setWidgetDefaultStyles(lodashClone(widget!.getStyles()));
+      updateTradingDaySeparators();
     }
   });
 
