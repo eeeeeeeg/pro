@@ -299,9 +299,22 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
     const currType = widget.getStyles().candle.type;
 
     if (currType !== type) {
-      setTimeout(() => {
-        widget?.setStyles({ candle: { type } });
-      }, 300);
+      const apply = () => {
+        if (!widget) {
+          return;
+        }
+        const current = widget.getStyles().candle.type;
+        if (current !== type) {
+          widget.setStyles({ candle: { type } });
+        }
+        pendingCandleType = undefined;
+      };
+      if (typeof queueMicrotask === "function") {
+        queueMicrotask(apply);
+      } else {
+        Promise.resolve().then(apply).catch(() => {});
+      }
+      return;
     }
     pendingCandleType = undefined;
   };
