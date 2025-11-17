@@ -12,15 +12,20 @@
  * limitations under the License.
  */
 
-import { registerIndicator, IndicatorSeries, KLineData } from 'klinecharts'
+import {
+  registerIndicator,
+  IndicatorSeries,
+  KLineData,
+  LineType,
+} from "klinecharts";
 
 interface AverageIndicatorResult {
-  avg?: number
+  avg?: number;
 }
 
 registerIndicator<AverageIndicatorResult>({
-  name: 'AVG',
-  shortName: 'AVG',
+  name: "AVG",
+  shortName: "AVG",
   calcParams: [],
   series: IndicatorSeries.Price,
   precision: 4,
@@ -29,26 +34,38 @@ registerIndicator<AverageIndicatorResult>({
   visible: true,
   figures: [
     {
-      key: 'avg',
-      title: 'AVG',
-      type: 'line'
-    }
+      key: "avg",
+      title: "AVG",
+      type: "line",
+    },
   ],
   calc: (dataList: KLineData[]) => {
     return dataList.map((kLine) => {
       if (!kLine) {
-        return { avg: undefined }
+        return { avg: undefined };
       }
       const prices = [kLine.open, kLine.high, kLine.low, kLine.close].filter(
-        (value): value is number => typeof value === 'number' && !Number.isNaN(value)
-      )
+        (value): value is number =>
+          typeof value === "number" && !Number.isNaN(value)
+      );
       if (prices.length === 0) {
-        return { avg: undefined }
+        return { avg: undefined };
       }
-      const total = prices.reduce((sum, price) => sum + price, 0)
+      const total = prices.reduce((sum, price) => sum + price, 0);
       return {
-        avg: total / prices.length
-      }
-    })
-  }
-})
+        avg: total / prices.length,
+      };
+    });
+  },
+  styles: {
+    lines: [
+      {
+        size: 1,
+        style: LineType.Solid,
+        dashedValue: [2, 2],
+        color: "#FFFF00",
+        smooth: true,
+      },
+    ],
+  },
+});

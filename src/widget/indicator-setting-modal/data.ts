@@ -17,14 +17,7 @@ export default {
     { paramNameKey: "params_1", precision: 0, min: 1, default: 5 },
     { paramNameKey: "params_2", precision: 0, min: 1, default: 34 },
   ],
-  AVG: [
-    {
-      paramNameKey: "avg_color",
-      type: "style",
-      styleKey: "lines[0].color",
-      default: "#f3b236",
-    },
-  ],
+  AVG: [],
   BIAS: [
     { paramNameKey: "BIAS1", precision: 0, min: 1, styleKey: "lines[0].color" },
     { paramNameKey: "BIAS2", precision: 0, min: 1, styleKey: "lines[1].color" },
