@@ -24,6 +24,7 @@ import { load } from './i18n'
 import { Datafeed, SymbolInfo, Period, DatafeedSubscribeCallback, ChartProOptions, ChartPro } from './types'
 
 import './index.less'
+import './indicator'
 
 overlays.forEach(o => { registerOverlay(o) })
 

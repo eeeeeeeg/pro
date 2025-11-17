@@ -37,8 +37,11 @@ import {
   ActionType,
   PaneOptions,
   Indicator,
+  IndicatorStyle,
   DomPosition,
   FormatDateType,
+  registerIndicator,
+  IndicatorCreate,
 } from "klinecharts";
 
 import lodashSet from "lodash/set";
@@ -132,7 +135,7 @@ const resolveSeparatorLineStyle = (theme: () => string) => {
     dashedValue: [4, 4],
   };
 };
-function createIndicator(
+function createIndicatorWithDefaults(
   widget: Nullable<Chart>,
   indicatorName: string,
   isStack?: boolean,
@@ -226,11 +229,20 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
   const [loadingVisible, setLoadingVisible] = createSignal(false);
 
   const [indicatorSettingModalParams, setIndicatorSettingModalParams] =
-    createSignal({
+    createSignal<{
+      visible: boolean;
+      indicatorName: string;
+      paneId: string;
+      calcParams: Array<any>;
+      styles?: Partial<IndicatorStyle> | null;
+      defaultStyles?: IndicatorStyle;
+    }>({
       visible: false,
       indicatorName: "",
       paneId: "",
       calcParams: [] as Array<any>,
+      styles: null,
+      defaultStyles: undefined,
     });
   const [tradingDaySeparatorVisible, setTradingDaySeparatorVisible] =
     createSignal(true);
@@ -354,10 +366,38 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
     setCandleType(nextType);
   };
 
+  const logCurrentDataSource = (): KLineData[] => {
+    if (!widget) {
+      console.warn(
+        "[ChartPro] Widget is not ready, cannot read current data source."
+      );
+      return [];
+    }
+    const dataList = widget.getDataList();
+    console.log("[ChartPro] Current data source detail: ", dataList);
+    return dataList;
+  };
+
+  const createIndicator = (
+    indicator: string | IndicatorCreate,
+    isStack?: boolean,
+    paneOptions?: PaneOptions,
+    callback?: () => void
+  ) => {
+    if (!widget) {
+      console.warn("[ChartPro] Widget is not ready, cannot create indicator.");
+      return null;
+    }
+    return widget.createIndicator(indicator, isStack, paneOptions, callback);
+  };
+
   props.ref({
     resize: () => {
       widget?.resize();
     },
+    logCurrentDataSource,
+    registerIndicator,
+    createIndicator,
     setTheme,
     getTheme: () => theme(),
     setStyles,
@@ -528,11 +568,11 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
     }
 
     mainIndicators().forEach((indicator) => {
-      createIndicator(widget, indicator, true, { id: "candle_pane" });
+      createIndicatorWithDefaults(widget, indicator, true, { id: "candle_pane" });
     });
     const subIndicatorMap = {};
     props.subIndicators!.forEach((indicator) => {
-      const paneId = createIndicator(widget, indicator, true);
+      const paneId = createIndicatorWithDefaults(widget, indicator, true);
       if (paneId) {
         // @ts-expect-error
         subIndicatorMap[indicator] = paneId;
@@ -579,11 +619,16 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
               data.paneId,
               data.indicatorName
             ) as Indicator;
+            const defaultIndicatorStyles =
+              widgetDefaultStyles()?.indicator ??
+              (widget ? (widget.getStyles().indicator as IndicatorStyle) : undefined);
             setIndicatorSettingModalParams({
               visible: true,
               indicatorName: data.indicatorName,
               paneId: data.paneId,
               calcParams: indicator.calcParams,
+              styles: indicator.styles,
+              defaultStyles: defaultIndicatorStyles,
             });
             break;
           }
@@ -795,7 +840,7 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
           onMainIndicatorChange={(data) => {
             const newMainIndicators = [...mainIndicators()];
             if (data.added) {
-              createIndicator(widget, data.name, true, { id: "candle_pane" });
+              createIndicatorWithDefaults(widget, data.name, true, { id: "candle_pane" });
               newMainIndicators.push(data.name);
             } else {
               widget?.removeIndicator("candle_pane", data.name);
@@ -806,7 +851,7 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
           onSubIndicatorChange={(data) => {
             const newSubIndicators = { ...subIndicators() };
             if (data.added) {
-              const paneId = createIndicator(widget, data.name);
+              const paneId = createIndicatorWithDefaults(widget, data.name);
               if (paneId) {
                 // @ts-expect-error
                 newSubIndicators[data.name] = paneId;
@@ -876,14 +921,22 @@ const ChartProComponent: Component<ChartProComponentProps> = (props) => {
               indicatorName: "",
               paneId: "",
               calcParams: [],
+              styles: null,
+              defaultStyles: undefined,
             });
           }}
           onConfirm={(params) => {
             const modalParams = indicatorSettingModalParams();
-            widget?.overrideIndicator(
-              { name: modalParams.indicatorName, calcParams: params },
-              modalParams.paneId
-            );
+            const override: IndicatorCreate = {
+              name: modalParams.indicatorName,
+            };
+            if (params.calcParams.length > 0) {
+              override.calcParams = params.calcParams;
+            }
+            if (params.styles && Object.keys(params.styles).length > 0) {
+              override.styles = params.styles;
+            }
+            widget?.overrideIndicator(override, modalParams.paneId);
           }}
         />
       </Show>

@@ -17,6 +17,8 @@
   "boll": "BOLL(布林线)",
   "bbi": "BBI(多空指数)",
   "sar": "SAR(停损点指向指标)",
+  "avg": "AVG(均价线)",
+  "avg_color": "均价线颜色",
   "vol": "VOL(成交量)",
   "macd": "MACD(指数平滑异同移动平均线)",
   "kdj": "KDJ(随机指标)",

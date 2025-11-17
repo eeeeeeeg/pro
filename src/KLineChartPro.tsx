@@ -14,7 +14,16 @@
 
 import { render } from 'solid-js/web'
 
-import { utils, Nullable, DeepPartial, Styles } from 'klinecharts'
+import {
+  utils,
+  Nullable,
+  DeepPartial,
+  Styles,
+  KLineData,
+  IndicatorTemplate,
+  IndicatorCreate,
+  PaneOptions
+} from 'klinecharts'
 
 import ChartProComponent from './ChartProComponent'
 
@@ -99,6 +108,23 @@ export default class KLineChartPro implements ChartPro {
 
   getStyles(): Styles {
     return this._chartApi!.getStyles()
+  }
+
+  logCurrentDataSource(): KLineData[] {
+    return this._chartApi!.logCurrentDataSource()
+  }
+
+  registerIndicator<D>(indicator: IndicatorTemplate<D>): void {
+    this._chartApi!.registerIndicator(indicator)
+  }
+
+  createIndicator<D>(
+    indicator: string | IndicatorCreate<D>,
+    isStack?: boolean,
+    paneOptions?: PaneOptions,
+    callback?: () => void
+  ): Nullable<string> {
+    return this._chartApi!.createIndicator(indicator, isStack, paneOptions, callback)
   }
 
   setLocale (locale: string): void {

@@ -16,6 +16,8 @@
   "boll": "BOLL(Bolinger Bands)",
   "bbi": "BBI(Bull And Bearlndex)",
   "sar": "SAR(Stop and Reverse)",
+  "avg": "AVG(Average Price)",
+  "avg_color": "AVG Line Color",
   "vol": "VOL(Volume)",
   "macd": "MACD(Moving Average Convergence / Divergence)",
   "kdj": "KDJ(KDJ Index)",

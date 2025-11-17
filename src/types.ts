@@ -12,7 +12,15 @@
  * limitations under the License.
  */
 
-import { KLineData, Styles, DeepPartial, Nullable } from 'klinecharts'
+import {
+  KLineData,
+  Styles,
+  DeepPartial,
+  Nullable,
+  IndicatorTemplate,
+  IndicatorCreate,
+  PaneOptions
+} from 'klinecharts'
 
 export interface SymbolInfo {
   ticker: string
@@ -75,6 +83,14 @@ export interface ChartPro {
   resize(): void
   setTheme(theme: string): void
   getTheme(): string
+  logCurrentDataSource(): KLineData[]
+  registerIndicator<D>(indicator: IndicatorTemplate<D>): void
+  createIndicator<D>(
+    indicator: string | IndicatorCreate<D>,
+    isStack?: boolean,
+    paneOptions?: PaneOptions,
+    callback?: () => void
+  ): Nullable<string>
   setStyles(styles: DeepPartial<Styles>): void
   getStyles(): Styles
   setLocale(locale: string): void
