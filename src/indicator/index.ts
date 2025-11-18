@@ -22,6 +22,9 @@ import {
 interface AverageIndicatorResult {
   avg?: number;
 }
+interface AvgKlineData extends KLineData {
+  volumeMultiple?: number;
+}
 
 registerIndicator<AverageIndicatorResult>({
   name: "AVG",
@@ -39,24 +42,12 @@ registerIndicator<AverageIndicatorResult>({
       type: "line",
     },
   ],
-  calc: (dataList: KLineData[]) => {
-    return dataList.map((kLine) => {
-      if (!kLine) {
-        return { avg: undefined };
-      }
-      const prices = [kLine.open, kLine.high, kLine.low, kLine.close].filter(
-        (value): value is number =>
-          typeof value === "number" && !Number.isNaN(value)
-      );
-      if (prices.length === 0) {
-        return { avg: undefined };
-      }
-      const total = prices.reduce((sum, price) => sum + price, 0);
+  calc: (dataList: AvgKlineData[]) =>
+    dataList.map((kLine: AvgKlineData) => {
       return {
-        avg: total / prices.length,
+        avg: calcAvg(kLine),
       };
-    });
-  },
+    }),
   styles: {
     lines: [
       {
@@ -69,3 +60,19 @@ registerIndicator<AverageIndicatorResult>({
     ],
   },
 });
+
+const calcAvg = (kLine: AvgKlineData) => {
+  const { turnover, volume, volumeMultiple } = kLine;
+  if (
+    turnover &&
+    volume &&
+    volumeMultiple &&
+    Number.isFinite(turnover) &&
+    Number.isFinite(volume) &&
+    Number.isFinite(volumeMultiple) &&
+    volume !== 0 &&
+    volumeMultiple !== 0
+  ) {
+    return turnover / (volume * volumeMultiple);
+  }
+};
